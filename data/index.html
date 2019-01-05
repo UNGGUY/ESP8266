@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>ESP配置中心</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="stylesheet" type="text/css" href="/milligram.min.css">
+	<style type="text/css">
+		.navigation {
+			background: #f4f5f6;
+			border-bottom: .1rem solid #d1d1d1;
+			display: block;
+			height: 5.2rem;
+			left: 0;
+			max-width: 100%;
+			position: fixed;
+			right: 0;
+			top: 0;
+			width: 100%;
+			z-index: 1;
+		}
+
+		.container {
+			max-width: 80rem;
+		}
+
+		.navigation-title {
+			line-height: 5.2rem;
+			color: #606c76;
+		}
+
+		.img {
+			fill: #9b4dca;
+			height: 2rem;
+			position: relative;
+			top: .3rem;
+		}
+	</style>
+</head>
+
+<body>
+	<nav class="navigation">
+		<section class="container">
+			<a class="navigation-title">
+				<svg class="img" version="1.1" viewBox="0 0 463 669">
+					<g transform="translate(0.000000,669.000000) scale(0.100000,-0.100000)">
+						<path d="M2303 6677c-11-13-58-89-393-627-128-206-247-397-265-425-18-27-85-135-150-240-65-104-281-451-480-770-358-575-604-970-641-1032-10-18-45-74-76-126-47-78-106-194-107-212-1-3-11-26-24-53-60-118-132-406-157-623-19-158-8-491 20-649 82-462 291-872 619-1213 192-199 387-340 646-467 335-165 638-235 1020-235 382 0 685 70 1020 235 259 127 454 268 646 467 328 341 537 751 619 1213 28 158 39 491 20 649-25 217-97 505-157 623-13 27-23 50-23 53 0 16-57 127-107 210-32 52-67 110-77 128-37 62-283 457-641 1032-199 319-415 666-480 770-65 105-132 213-150 240-18 28-137 219-265 425-354 570-393 630-400 635-4 3-12-1-17-8zm138-904c118-191 654-1050 1214-1948 148-236 271-440 273-452 2-13 8-23 11-23 14 0 72-99 125-212 92-195 146-384 171-598 116-974-526-1884-1488-2110-868-205-1779 234-2173 1046-253 522-257 1124-10 1659 45 97 108 210 126 225 4 3 9 13 13 22 3 9 126 209 273 445 734 1176 1102 1766 1213 1946 67 108 124 197 126 197 2 0 59-89 126-197zM1080 3228c-75-17-114-67-190-243-91-212-128-368-137-580-34-772 497-1451 1254-1605 77-15 112-18 143-11 155 35 212 213 106 329-32 36-62 48-181 75-223 50-392 140-552 291-115 109-178 192-242 316-101 197-136 355-128 580 3 111 10 167 30 241 30 113 80 237 107 267 11 12 20 26 20 32 0 6 8 22 17 36 26 41 27 99 3 147-54 105-142 149-250 125z"></path>
+					</g>
+				</svg>&nbsp;主页</a>
+		</section>
+	</nav>
+	<section class="container" style="padding-bottom: 7.5rem;padding-top: 7.5rem;">
+		<h3 class="title">设备配置</h3>
+		<p class="description">设置保存成功后需重启设备。</p>
+		<form style="margin-top: 4rem;">
+			<fieldset>
+				<!-- <label for="server_ip">IP地址</label>
+				<input id="server_ip" type="text">
+				<label for="server_port">端口号</label>
+				<input id="server_port" type="text"> -->
+				<label for="ap_ssid">网络名称</label>
+				<input id="ap_ssid" type="text">
+				<label for="ap_pw">网络密码</label>
+				<input id="ap_pw" type="password">
+				<div class="float-right">
+					<input id="ap_open" type="checkbox">
+					<label class="label-inline" for="ap_open">开放网络</label>
+				</div>
+				<input type="button" value="保存" class="button-primary" onclick="click_settings_upload();" />
+			</fieldset>
+		</form>
+	</section>
+	<script type="text/javascript">
+		// window.onload = function () {
+		// 	console.log("window on ready.");
+		// 	request_settings();
+		// }
+
+		// function request_settings() {
+		// 	console.log("start request current setting.");
+		// 	var xhr = new window.XMLHttpRequest();
+		// 	xhr.onreadystatechange = function () {
+		// 		if (xhr.readyState == 4) {
+		// 			if (xhr.status == 200) {
+		// 				request_settings_ok(xhr.responseText);
+		// 			}
+		// 		}
+		// 	}
+		// 	xhr.open('get', '/api/wifi/config_get', true);
+		// 	xhr.send(null);
+		// }
+
+		// function request_settings_ok(response) {
+		// 	console.log("settings: " + response);
+		// 	var settings = JSON.parse(response);
+		// 	//var form_ip = document.getElementById('server_ip');
+		// 	//var form_port = document.getElementById('server_port');
+		// 	var form_ssid = document.getElementById('ap_ssid');
+		// 	var form_pw = document.getElementById('ap_pw');
+		// 	//var form_open = document.getElementById('ap_open');
+		// 	form_ip.value = settings.server_ip;
+		// 	form_port.value = settings.server_port;
+		// 	form_ssid.value = settings.ap_ssid;
+		// 	form_pw.value = settings.ap_pw;
+		// 	form_open.checked = settings.ap_open;
+		// }
+
+		function click_settings_upload() {
+			console.log("verify user input");
+			var form_ip = document.getElementById('server_ip');
+			var form_port = document.getElementById('server_port');
+			var form_ssid = document.getElementById('ap_ssid');
+			var form_pw = document.getElementById('ap_pw');
+			var form_open = document.getElementById('ap_open');
+			// 验证IP格式
+			// var re_ip =  /^\s*(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])(\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])){3}\s*$/;
+			// var valid_ip = re_ip.test(form_ip.value);
+			// console.log('ip:' + valid_ip);
+			// if (valid_ip == false) {
+			// 	alert('IP地址请输入点分十进制格式');
+			// 	return;
+			// }
+			// // 验证端口
+			// var re_port = /^\s*\d+\s*$/
+			// var port_parse = parseInt(form_port.value, 16);
+			// var valid_port = re_port.test(form_port.value) && port_parse != NaN &&  port_parse > 0 && port_parse < 0xFFFF;
+			// console.log('port:' + valid_port);
+			// if (valid_port == false) {
+			// 	alert('端口号格式有误');
+			// 	return;
+			// }
+			// 验证ssid
+			var valid_ssid = form_ssid.value.length > 0 && form_ssid.value.length < 64;
+			console.log('ssid:' + valid_ssid);
+			if (valid_ssid == false) {
+				alert('网络名称长度应大于0小于64个字符');
+				return;
+			}
+			// 验证密码
+			valid_pw = (form_open.checked) || (form_pw.value.length > 7 && form_pw.value.length < 32);
+			console.log('pw:' + valid_pw);
+			if (valid_pw == false) {
+				alert('网络密码最少为8个字符并小于32个字符');
+				return;
+			}
+			// if (valid_ip && valid_port && valid_ssid && valid_pw) {
+			// 	upload_settinsg(form_ip.value, parseInt(form_port.value), form_ssid.value, form_pw.value, form_open.value ? 1 : 0);
+			// }
+
+			if (valid_ssid && valid_pw) {
+				upload_settinsg(form_ssid.value, form_pw.value, form_open.value ? 1 : 0);
+			}
+
+		}
+
+		// function upload_settinsg(ip, port, ssid, pw, open) {
+		// 	var payload = { "server_ip": ip, "server_port": port, "ap_ssid": ssid, "ap_pw": pw, "ap_open": open };
+		// 	console.log(JSON.stringify(payload));
+		// 	var xhr = new XMLHttpRequest();
+		// 	xhr.onreadystatechange = function () {
+		// 		if (xhr.readyState == 4) {
+		// 			if (xhr.status == 200) {
+		// 				upload_settings_finish(xhr.responseText);
+		// 			}
+		// 		}
+		// 	}
+		// 	xhr.open('post', '/api/wifi/config_set', true);
+		// 	xhr.setRequestHeader('Content-Type', 'application/json;charset=utf-8');
+
+		// 	xhr.send(JSON.stringify(payload));
+		// }
+
+		function upload_settinsg(ssid, pw, open) {
+			// var payload = { "ap_ssid": ssid, "ap_pw": pw, "ap_open": open };
+			// console.log(JSON.stringify(payload));
+			var form = new FormData();
+			form.append("username", ssid);
+			form.append("password", pw);
+			var xhr = new XMLHttpRequest();
+			xhr.onreadystatechange = function () {
+				if (xhr.readyState == 4) {
+					if (xhr.status == 200) {
+						upload_settings_finish(xhr.responseText);
+					}
+				}
+			}
+			xhr.open('post', '/api/wifi/config_set', true);
+			//xhr.setRequestHeader('Content-Type', 'application/json;charset=utf-8');
+			//xhr.send(JSON.stringify(payload));
+			xhr.send(form);
+		}
+
+		function upload_settings_finish(response) {
+			alert(response);
+		}
+	</script>
+</body>
+
+</html>
