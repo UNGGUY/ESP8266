@@ -9,6 +9,8 @@ const byte DNS_PORT = 53;
 IPAddress apIP(192, 168, 1, 1);
 DNSServer dnsServer;
 ESP8266WebServer webServer(80);
+WiFiClient espClient;
+PubSubClient client(espClient);
 
 const char* host = "192.168.199.238";
 const uint16_t port = 6000;
@@ -48,6 +50,7 @@ void handleNotFound()
 void getWebConfig()
 {
   memset(con, 0, sizeof(con) / sizeof(char));
+  SPIFFS.begin();
   file = SPIFFS.open("/config.txt", "r");
   if (file) {
     file.readBytes(con, file.size());
@@ -63,6 +66,10 @@ void getWebConfig()
       }
     }
   }
+  file.close();
+  SPIFFS.end();
+  Serial.println(webConfig_info[0]);
+  Serial.println(webConfig_info[1]);
 }
 
 
@@ -72,95 +79,72 @@ void setWebConfig()
   Serial.println(webServer.arg("username"));
   Serial.println(webServer.arg("password"));
   WiFi.begin(webServer.arg("username"), webServer.arg("password"));
-
-  for (uint8_t i = 0; i <= 10; i++)
-  {
-    delay(500);
-    Serial.print(".");
-    if (WiFi.status() == WL_CONNECTED) {
-      String str;
-      for (int i = 0; i < webServer.args(); i++)
-      {
-        str += webServer.arg(i) + "\n";
-      }
-      Serial.println(str);
-      memset(con, 0, sizeof(con) / sizeof(char));
-      strcpy(con, str.c_str());
-      Serial.println("config");
-      SPIFFS.begin();
-      file = SPIFFS.open("/config.txt", "w");
-      if (file) {
-        file.write((uint8_t*)con, sizeof(con));
-        file.close();
-        SPIFFS.end();
-      }
-      Serial.println("save");
-      webServer.send(200, "text/html", WiFi.localIP().toString().c_str());
-      Serial.println(WiFi.localIP().toString().c_str());
-      for (uint8_t i = 0; i < 20; i++)
-      {
-        delay(500);
-        Serial.print(".");
-      }
-
-      WiFi.softAPdisconnect(true);
-      WiFi.mode(WIFI_STA);
-      webServer.close();
-      return;
-    }
+  if (WiFi.waitForConnectResult() == WL_NO_SSID_AVAIL || WiFi.waitForConnectResult() == WL_CONNECT_FAILED) {
+    WiFi.disconnect(true);
+    webServer.send(200, "text/plain", "SSID OR PASSWORD ERROR");
   }
-  WiFi.disconnect(true);
-  webServer.send(200, "text/plain", "Set Wifi config error!");
+  else {
+    String str;
+    for (int i = 0; i < webServer.args(); i++)
+    {
+      str += webServer.arg(i) + "\n";
+    }
+    Serial.println(str);
+    memset(con, 0, sizeof(con) / sizeof(char));
+    strcpy(con, str.c_str());
+    Serial.println("config");
+    SPIFFS.begin();
+    file = SPIFFS.open("/config.txt", "w");
+    if (file) {
+      file.write((uint8_t*)con, sizeof(con));
+      file.close();
+      SPIFFS.end();
+    }
+    Serial.println("save");
+    webServer.send(200, "text/html", WiFi.localIP().toString().c_str());
+    Serial.println(WiFi.localIP().toString().c_str());
+    for (uint8_t i = 0; i < 20; i++)
+    {
+      delay(500);
+      Serial.print(".");
+    }
+    WiFi.softAPdisconnect(true);
+    WiFi.mode(WIFI_STA);
+    webServer.close();
+    return;
+  }
 }
 
 
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("\nHello");
-  SPIFFS.begin();
+  Serial.println();
   getWebConfig();
-  Serial.println(webConfig_info[0]);
-  Serial.println(webConfig_info[1]);
   WiFi.begin(webConfig_info[0], webConfig_info[1]);
-  for (uint8_t i = 0; i <= 5; i++)
-  {
-    delay(500);
-  }
-
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("ocnfig");
-    WiFi.mode(WIFI_AP);
-    WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-    WiFi.softAP("DNSServer CaptivePortal example");
-
-    // if DNSServer is started with "*" for domain name, it will reply with
-    // provided IP to all DNS request
-    dnsServer.start(DNS_PORT, "*", apIP);
 
 
-    webServer.on("/api/wifi/config_set", setWebConfig);
-    // replay to all requests with same HTML
-    webServer.onNotFound(handleNotFound);
-    webServer.begin();
-  }
 
-  else {
-    WiFi.mode(WIFI_STA);
-    Serial.println(WiFi.localIP().toString().c_str());
-    Serial.println("WiFi Begin");
-  }
+
+  // if DNSServer is started with "*" for domain name, it will reply with
+  // provided IP to all DNS request
+  dnsServer.start(DNS_PORT, "*", apIP);
+
+
+  webServer.on("/api/wifi/config_set", setWebConfig);
+  // replay to all requests with same HTML
+  webServer.onNotFound(handleNotFound);
+
+
+
 }
 
 
 
 void loop() {
-  if (WiFi.status() != WL_CONNECTED) {
-    dnsServer.processNextRequest();
-    webServer.handleClient();
-  }
-  else
-  {
+
+
+  if (WiFi.status() == WL_CONNECTED) {
     memset(con, 0, sizeof(con) / sizeof(char));
     Serial.readBytes(con, sizeof(con));
     delay(1000);
@@ -179,4 +163,16 @@ void loop() {
       }
     }
   }
+  else {
+    if (WiFi.waitForConnectResult() == WL_NO_SSID_AVAIL || WiFi.waitForConnectResult() == WL_CONNECT_FAILED) {
+      WiFi.mode(WIFI_AP);
+      WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+      WiFi.softAP("ESP8266 WiFi config");
+      webServer.begin();
+    }
+    dnsServer.processNextRequest();
+    webServer.handleClient();
+  }
+
+
 }
