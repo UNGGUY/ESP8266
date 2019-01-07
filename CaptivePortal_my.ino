@@ -11,15 +11,47 @@ DNSServer dnsServer;
 ESP8266WebServer webServer(80);
 WiFiClient espClient;
 PubSubClient client(espClient);
+const char* mqtt_server = "192.168.199.238";
+const char* client_id = "clientId-ApjJZcy9Dh";
+const char* mqtt_username = "admin";
+const char* mqtt_password = "public";
+long lastMsg;
 
 const char* host = "192.168.199.238";
 const uint16_t port = 6000;
+
 
 File file;
 char con[200];
 char buf[10240];
 String webConfig_info[2];
 
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);   // 打印主题信息
+  Serial.print("] ");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]); // 打印主题内容
+  }
+  Serial.println();
+}
+
+
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    if (client.connect(client_id, mqtt_username, mqtt_password)) {
+      Serial.println("connected");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
 
 
 void handleNotFound()
@@ -123,7 +155,8 @@ void setup() {
   getWebConfig();
   WiFi.begin(webConfig_info[0], webConfig_info[1]);
 
-
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
 
 
   // if DNSServer is started with "*" for domain name, it will reply with
@@ -144,10 +177,20 @@ void setup() {
 void loop() {
 
 
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+  long now = millis();
+  if (now - lastMsg > 2000) {
+    lastMsg = now;
+    Serial.println("aaaa");
+    client.publish("home/status/", "{device:client_id,'status':'on'}");
+  }
+
   if (WiFi.status() == WL_CONNECTED) {
     memset(con, 0, sizeof(con) / sizeof(char));
     Serial.readBytes(con, sizeof(con));
-    delay(1000);
     if (strlen(con)) {
       WiFiClient client;
       if (!client.connect(host, port)) {
