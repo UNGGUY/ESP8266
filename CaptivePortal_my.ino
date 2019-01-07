@@ -176,17 +176,16 @@ void setup() {
 
 
 void loop() {
-
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
   if (WiFi.status() == WL_CONNECTED) {
     if (Serial.available()) {
       memset(con, 0, sizeof(con) / sizeof(char));
       Serial.readBytes(con, sizeof(con));
       client.publish("home/status/", con);
     }
-    if (!client.connected()) {
-      reconnect();
-    }
-    client.loop();
   }
   else {
     if (WiFi.waitForConnectResult() == WL_NO_SSID_AVAIL || WiFi.waitForConnectResult() == WL_CONNECT_FAILED) {
