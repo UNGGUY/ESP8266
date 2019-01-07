@@ -176,35 +176,17 @@ void setup() {
 
 
 void loop() {
-  
+
   if (WiFi.status() == WL_CONNECTED) {
     if (Serial.available()) {
       memset(con, 0, sizeof(con) / sizeof(char));
       Serial.readBytes(con, sizeof(con));
-      if (strlen(con)) {
-        WiFiClient client;
-        if (!client.connect(host, port)) {
-          Serial.println("connection failed");
-          Serial.println("wait 5 sec...");
-          delay(5000);
-        }
-        else {
-          client.println(con);
-          String line = client.readStringUntil('\r');
-          Serial.println(line);
-          client.stop();
-        }
-      }
+      client.publish("home/status/", con);
     }
     if (!client.connected()) {
       reconnect();
     }
     client.loop();
-    long now = millis();
-    if (now - lastMsg > 2000) {
-      lastMsg = now;
-      client.publish("home/status/", "{device:client_id,'status':'on'}");
-    }
   }
   else {
     if (WiFi.waitForConnectResult() == WL_NO_SSID_AVAIL || WiFi.waitForConnectResult() == WL_CONNECT_FAILED) {
