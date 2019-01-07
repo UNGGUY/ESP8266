@@ -43,6 +43,7 @@ void reconnect() {
     // Attempt to connect
     if (client.connect(client_id, mqtt_username, mqtt_password)) {
       Serial.println("connected");
+      client.subscribe("home/status/");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -175,35 +176,34 @@ void setup() {
 
 
 void loop() {
-
-
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
-  long now = millis();
-  if (now - lastMsg > 2000) {
-    lastMsg = now;
-    Serial.println("aaaa");
-    client.publish("home/status/", "{device:client_id,'status':'on'}");
-  }
-
+  
   if (WiFi.status() == WL_CONNECTED) {
-    memset(con, 0, sizeof(con) / sizeof(char));
-    Serial.readBytes(con, sizeof(con));
-    if (strlen(con)) {
-      WiFiClient client;
-      if (!client.connect(host, port)) {
-        Serial.println("connection failed");
-        Serial.println("wait 5 sec...");
-        delay(5000);
+    if (Serial.available()) {
+      memset(con, 0, sizeof(con) / sizeof(char));
+      Serial.readBytes(con, sizeof(con));
+      if (strlen(con)) {
+        WiFiClient client;
+        if (!client.connect(host, port)) {
+          Serial.println("connection failed");
+          Serial.println("wait 5 sec...");
+          delay(5000);
+        }
+        else {
+          client.println(con);
+          String line = client.readStringUntil('\r');
+          Serial.println(line);
+          client.stop();
+        }
       }
-      else {
-        client.println(con);
-        String line = client.readStringUntil('\r');
-        Serial.println(line);
-        client.stop();
-      }
+    }
+    if (!client.connected()) {
+      reconnect();
+    }
+    client.loop();
+    long now = millis();
+    if (now - lastMsg > 2000) {
+      lastMsg = now;
+      client.publish("home/status/", "{device:client_id,'status':'on'}");
     }
   }
   else {
@@ -216,6 +216,4 @@ void loop() {
     dnsServer.processNextRequest();
     webServer.handleClient();
   }
-
-
 }
