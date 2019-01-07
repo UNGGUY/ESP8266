@@ -176,11 +176,12 @@ void setup() {
 
 
 void loop() {
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
+
   if (WiFi.status() == WL_CONNECTED) {
+    if (!client.connected()) {
+      reconnect();
+    }
+    client.loop();
     if (Serial.available()) {
       memset(con, 0, sizeof(con) / sizeof(char));
       Serial.readBytes(con, sizeof(con));
