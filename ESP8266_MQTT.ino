@@ -21,6 +21,9 @@ char con[200];
 char buf[10240];
 String webConfig_info[2];
 
+String FILETYPE[5]={".css",".img",".jpe",".jpg",".js"};
+String CONTENTTYPE[5]={"text/css","image/jpeg","image/jpeg","image/jpeg","application/x-javascript"};
+
 
 void setup() {
   Serial.begin(115200);
@@ -43,15 +46,15 @@ void setup() {
 void loop() {
 
   if (WiFi.status() == WL_CONNECTED) {
-    if (!client.connected()) {
-      reconnect();
-    }
-    client.loop();
     if (Serial.available()) {
       memset(con, 0, sizeof(con) / sizeof(char));
       Serial.readBytes(con, sizeof(con));
       client.publish("home/status/", con);
     }
+    if (!client.connected()) {
+      reconnect();
+    }
+    client.loop();
   }
   else {
     if (WiFi.waitForConnectResult() == WL_NO_SSID_AVAIL || WiFi.waitForConnectResult() == WL_CONNECT_FAILED) {

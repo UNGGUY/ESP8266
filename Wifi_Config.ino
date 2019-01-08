@@ -13,14 +13,11 @@ void handleNotFound()
   else
   {
     fileType = strrchr(webServer.uri().c_str(), '.');
-    if (strcmp(fileType, ".css") == 0)
-      content_type = "text/css";
-    else if (strcmp(fileType, ".img") == 0 || strcmp(fileType, ".jpe") == 0 || strcmp(fileType, ".jpg") == 0)
-      content_type = "image/jpeg";
-    else if (strcmp(fileType, ".png") == 0)
-      content_type = "image/png";
-    else if (strcmp(fileType, ".js") == 0)
-      content_type = "application/x-javascript";
+    for (int i = 0; i < 5; i++)
+    {
+      if (strcmp(fileType, FILETYPE[i].c_str()) == 0)
+        content_type = CONTENTTYPE[i];
+    }
   }
   if (file) {
     file.readBytes(buf, file.size());
@@ -50,6 +47,7 @@ void getWebConfig()
   }
   file.close();
   SPIFFS.end();
+  memset(con, 0, sizeof(con) / sizeof(char));
 }
 
 
