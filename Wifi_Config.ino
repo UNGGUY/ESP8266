@@ -1,3 +1,39 @@
+#include <ESP8266WiFi.h>
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+#include <FS.h>
+
+File file;
+char con[200];
+char buf[10240];
+const byte DNS_PORT = 53;
+IPAddress apIP(192, 168, 1, 1);
+DNSServer dnsServer;
+ESP8266WebServer webServer(80);
+String FILETYPE[5] = {".css", ".img", ".jpe", ".jpg", ".js"};
+String CONTENTTYPE[5] = {"text/css", "image/jpeg", "image/jpeg", "image/jpeg", "application/x-javascript"};
+
+void Wifi()
+{
+  dnsServer.processNextRequest();
+  webServer.handleClient();
+}
+
+void WifiSetUp()
+{
+  WiFi.mode(WIFI_AP);
+  WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+  WiFi.softAP("ESP8266 WiFi Config");
+  webServer.begin();
+  // if DNSServer is started with "*" for domain name, it will reply with
+  // provided IP to all DNS request
+  dnsServer.start(DNS_PORT, "*", apIP);
+
+  webServer.on("/api/wifi/config_set", setWebConfig);
+  // replay to all requests with same HTML
+  webServer.onNotFound(handleNotFound);
+}
+
 void handleNotFound()
 {
   String content_type;
@@ -27,38 +63,12 @@ void handleNotFound()
   }
 }
 
-void getWebConfig()
-{
-  memset(con, 0, sizeof(con) / sizeof(char));
-  SPIFFS.begin();
-  file = SPIFFS.open("/config.txt", "r");
-  if (file) {
-    file.readBytes(con, file.size());
-    int i = 0, j = 0;
-    for (; con[i] != '\0'; i++)
-    {
-      if (con[i] != '\n')
-        webConfig_info[j] += con[i];
-      else
-      {
-        j++;
-      }
-    }
-  }
-  file.close();
-  SPIFFS.end();
-  memset(con, 0, sizeof(con) / sizeof(char));
-}
+
 
 
 void setWebConfig()
 {
   WiFi.begin(webServer.arg("username"), webServer.arg("password"));
-  //  if (WiFi.waitForConnectResult() == WL_NO_SSID_AVAIL || WiFi.waitForConnectResult() == WL_CONNECT_FAILED) {
-  //    WiFi.disconnect(true);
-  //    webServer.send(200, "text/plain", "SSID OR PASSWORD ERROR");
-  //  }
-  //else {
   String str;
   for (int i = 0; i < webServer.args(); i++)
   {
@@ -83,5 +93,4 @@ void setWebConfig()
   WiFi.mode(WIFI_STA);
   webServer.close();
   return;
-  //  }
 }
