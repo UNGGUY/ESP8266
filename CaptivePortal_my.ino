@@ -33,7 +33,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]); // 打印主题内容
   }
-  Serial.println();
+  //Serial.println();
 }
 
 
@@ -42,12 +42,12 @@ void reconnect() {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
     if (client.connect(client_id, mqtt_username, mqtt_password)) {
-      Serial.println("connected");
+//      Serial1.println("connected");
       client.subscribe("home/status/");
     } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
+//      Serial1.print("failed, rc=");
+//      Serial1.print(client.state());
+//      Serial1.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
     }
@@ -57,27 +57,34 @@ void reconnect() {
 
 void handleNotFound()
 {
+  String content_type;
+  char *fileType;
   memset(buf, 0, sizeof(buf) / sizeof(char));
   SPIFFS.begin();
   file = SPIFFS.open(webServer.uri(), "r");
-  if (file)
+  if (!file)
   {
-    file.readBytes(buf, file.size());
-    file.close();
-    SPIFFS.end();
-    webServer.send(200, "text/css", buf);
+    file = SPIFFS.open("/index.html", "r");
+    content_type="text/html";
   }
   else
   {
-    file = SPIFFS.open("/index.html", "r");
-    if (file) {
-      file.readBytes(buf, file.size());
-      file.close();
-      SPIFFS.end();
-      webServer.send(200, "text/html", buf);
-    }
+    fileType = strrchr(webServer.uri().c_str(), '.');
+    if (strcmp(fileType, ".css")==0)
+      content_type = "text/css";
+    else if (strcmp(fileType, ".img")==0 || strcmp(fileType, ".jpe")==0 || strcmp(fileType, ".jpg")==0)
+      content_type = "image/jpeg";
+    else if (strcmp(fileType, ".png")==0)
+      content_type = "image/png";
+    else if (strcmp(fileType, ".js")==0)
+      content_type = "application/x-javascript";
   }
-
+  if (file) {
+    file.readBytes(buf, file.size());
+    webServer.send(200, content_type, buf);
+    file.close();
+    SPIFFS.end();
+  }
 }
 
 void getWebConfig()
@@ -94,68 +101,56 @@ void getWebConfig()
         webConfig_info[j] += con[i];
       else
       {
-        //Serial.println(webConfig_info[j]);
         j++;
       }
     }
   }
   file.close();
   SPIFFS.end();
-  Serial.println(webConfig_info[0]);
-  Serial.println(webConfig_info[1]);
 }
 
 
 void setWebConfig()
 {
-  //  Serial.println(webServer.uri());
-  Serial.println(webServer.arg("username"));
-  Serial.println(webServer.arg("password"));
   WiFi.begin(webServer.arg("username"), webServer.arg("password"));
-  if (WiFi.waitForConnectResult() == WL_NO_SSID_AVAIL || WiFi.waitForConnectResult() == WL_CONNECT_FAILED) {
-    WiFi.disconnect(true);
-    webServer.send(200, "text/plain", "SSID OR PASSWORD ERROR");
+  //  if (WiFi.waitForConnectResult() == WL_NO_SSID_AVAIL || WiFi.waitForConnectResult() == WL_CONNECT_FAILED) {
+  //    WiFi.disconnect(true);
+  //    webServer.send(200, "text/plain", "SSID OR PASSWORD ERROR");
+  //  }
+  //else {
+  String str;
+  for (int i = 0; i < webServer.args(); i++)
+  {
+    str += webServer.arg(i) + "\n";
   }
-  else {
-    String str;
-    for (int i = 0; i < webServer.args(); i++)
-    {
-      str += webServer.arg(i) + "\n";
-    }
-    Serial.println(str);
-    memset(con, 0, sizeof(con) / sizeof(char));
-    strcpy(con, str.c_str());
-    Serial.println("config");
-    SPIFFS.begin();
-    file = SPIFFS.open("/config.txt", "w");
-    if (file) {
-      file.write((uint8_t*)con, sizeof(con));
-      file.close();
-      SPIFFS.end();
-    }
-    Serial.println("save");
-    webServer.send(200, "text/html", WiFi.localIP().toString().c_str());
-    Serial.println(WiFi.localIP().toString().c_str());
-    for (uint8_t i = 0; i < 20; i++)
-    {
-      delay(500);
-      Serial.print(".");
-    }
-    WiFi.softAPdisconnect(true);
-    WiFi.mode(WIFI_STA);
-    webServer.close();
-    return;
+  memset(con, 0, sizeof(con) / sizeof(char));
+  strcpy(con, str.c_str());
+  SPIFFS.begin();
+  file = SPIFFS.open("/config.txt", "w");
+  if (file) {
+    file.write((uint8_t*)con, sizeof(con));
+    file.close();
+    SPIFFS.end();
   }
+  webServer.send(200, "text/plain", WiFi.localIP().toString().c_str());
+  for (uint8_t i = 0; i < 20; i++)
+  {
+    delay(500);
+    Serial.print(".");
+  }
+  WiFi.softAPdisconnect(true);
+  WiFi.mode(WIFI_STA);
+  webServer.close();
+  return;
+  //  }
 }
 
 
 
 void setup() {
   Serial.begin(115200);
-  Serial.println();
   getWebConfig();
   WiFi.begin(webConfig_info[0], webConfig_info[1]);
-
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 
