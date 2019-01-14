@@ -1,17 +1,14 @@
+#include <ESP8266WiFi.h>
 typedef void (*Function)();
-Function Init,l;
+Function Init, myServer;
 
 void setup() {
-  if (digitalRead(4)) {
-    Init = WifiSetUp;
-    l = Wifi;
-  }
-  else {
-    Init = MQTTSetUp;
-    l = MQTT;
-  }
-  Init();
+  MQTTSetUp();
+  WifiSetUp();
 }
 void loop() {
-  l();
+  if (WiFi.status() == WL_CONNECTED)
+    MQTT();
+  else
+    WifiConfig();
 }

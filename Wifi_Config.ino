@@ -1,4 +1,3 @@
-#include <ESP8266WiFi.h>
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
 #include <FS.h>
@@ -13,18 +12,23 @@ ESP8266WebServer webServer(80);
 String FILETYPE[5] = {".css", ".img", ".jpe", ".jpg", ".js"};
 String CONTENTTYPE[5] = {"text/css", "image/jpeg", "image/jpeg", "image/jpeg", "application/x-javascript"};
 
-void Wifi()
+void WifiConfig()
 {
+  if (WiFi.waitForConnectResult() == WL_NO_SSID_AVAIL || WiFi.waitForConnectResult() == WL_CONNECT_FAILED) {
+    Serial.println("ap");
+    WiFi.mode(WIFI_AP);
+    WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+    WiFi.softAP("ESP8266WiFiConfig");
+    webServer.begin();
+  }
   dnsServer.processNextRequest();
   webServer.handleClient();
 }
 
+
+
 void WifiSetUp()
 {
-  WiFi.mode(WIFI_AP);
-  WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-  WiFi.softAP("ESP8266 WiFi Config");
-  webServer.begin();
   // if DNSServer is started with "*" for domain name, it will reply with
   // provided IP to all DNS request
   dnsServer.start(DNS_PORT, "*", apIP);
@@ -69,28 +73,32 @@ void handleNotFound()
 void setWebConfig()
 {
   WiFi.begin(webServer.arg("username"), webServer.arg("password"));
-  String str;
-  for (int i = 0; i < webServer.args(); i++)
-  {
-    str += webServer.arg(i) + "\n";
+  if (WiFi.waitForConnectResult() == WL_NO_SSID_AVAIL || WiFi.waitForConnectResult() == WL_CONNECT_FAILED) {
+    WiFi.disconnect(true);
+    webServer.send(200, "text/plain", "SSID OR PASSWORD ERROR");
   }
-  memset(con, 0, sizeof(con) / sizeof(char));
-  strcpy(con, str.c_str());
-  SPIFFS.begin();
-  file = SPIFFS.open("/config.txt", "w");
-  if (file) {
-    file.write((uint8_t*)con, sizeof(con));
-    file.close();
-    SPIFFS.end();
+  else {
+    String str;
+    for (int i = 0; i < webServer.args(); i++)
+    {
+      str += webServer.arg(i) + "\n";
+    }
+    memset(con, 0, sizeof(con) / sizeof(char));
+    strcpy(con, str.c_str());
+    SPIFFS.begin();
+    file = SPIFFS.open("/config.txt", "w");
+    if (file) {
+      file.write((uint8_t*)con, sizeof(con));
+      file.close();
+      SPIFFS.end();
+    }
+    webServer.send(200, "text/plain", WiFi.localIP().toString().c_str());
+    for (uint8_t i = 0; i < 20; i++)
+    {
+      delay(500);
+    }
+    WiFi.softAPdisconnect(true);
+    WiFi.mode(WIFI_STA);
+    webServer.close();
   }
-  webServer.send(200, "text/plain", WiFi.localIP().toString().c_str());
-  for (uint8_t i = 0; i < 20; i++)
-  {
-    delay(500);
-    Serial.print(".");
-  }
-  WiFi.softAPdisconnect(true);
-  WiFi.mode(WIFI_STA);
-  webServer.close();
-  return;
 }
